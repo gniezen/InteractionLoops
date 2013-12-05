@@ -2,10 +2,12 @@ import random
 import math
 import feedback as fb
 import matplotlib.pyplot as mp
+from scipy import signal
+import numpy as np
 
 xplot = []
 yplot =[]
-
+uplot =[]
 class System (fb.Component):
     def __init__(self):
         self.xi = 0
@@ -32,11 +34,16 @@ class Controller(fb.Component):
         self.kp = kp
         self.k1 = k1
         self.k2 = k2
+        self.kc = 1
         self.u=0
         self.noise = noise
-        self.sigma = 50
+        self.sigma = 5
+        self.z = 1
+        self.p = 0
+        self.square = False # boolean toggle for square wave
 
     def work( self, e):
+        
 
         e += self._noise()  # Introduce noise, if any 
         
@@ -46,8 +53,27 @@ class Controller(fb.Component):
         self.d = ( e - self.prev )/fb.DT
         #return self.kp * math.copysign(1,e)  
 
-        self.u = (self.kp * ((self.k1 * math.copysign(1,e))-(self.k2*math.copysign(1,self.d)))) 
+        if (e > 100):
+            if (self.u-self.z > 0):
+                self.z = 0
+                self.p = self.u
+        
+            if (self.z <= 0):
+                self.z = 1
+
+            self.u = self.z * (self.kp * ((self.k1 * math.copysign(1,e))-(self.k2*math.copysign(1,self.d)))) 
+        else: # e(t) <= 100
+            self.square = not self.square
+            print self.square
+
+            if(self.square):
+                self.u = self.kc * math.copysign(1,e)        
+            else:
+                self.u = 0
+    
         self.prev = e
+
+        uplot.append(self.u)
                       
         return self.u
 
@@ -84,10 +110,11 @@ def setpoint(t):
 
 fb.DT = 0.1
 tm = 50 
-c = Controller( 1, 5.5, 4.5, 810,noise=True )
+c = Controller( 1, 5.5, 4.5, 810,noise=False )
 p = System()
 
 fb.closed_loop(setpoint, c, p, tm)
 mp.plot(yplot,'r')
+mp.step(uplot,'b')
 mp.show()
 
