@@ -4,10 +4,6 @@ import random
 import matplotlib.pyplot as mp
 
 DT = None # Sampling interval - defaults to None, must be set explicitly
-xplot = []
-yplot =[]
-eplot = []
-ytarget =[]
 
 # ============================================================
 # Components
@@ -300,16 +296,12 @@ def closed_loop( setpoint, controller, plant, tm=5000, inverted=False,
         y = plant.work(v)
         z = returnfilter.work(y)
 
-        print t, t*DT, r, e, u, v, y, z, plant.monitoring()
+        print "T=",t," T*DT=", t*DT, " r=", r, " e=",e," u=", u," v=", v," y=", y," z=", z, plant.monitoring()
 
-        xplot.append(t)
-        yplot.append(y)
-        ytarget.append(setpoint(t))
+        #controller.xplot.append(t)
+        controller.yplot.append(y)
+        controller.reference.append(setpoint(t))
 
-    mp.plot(xplot,yplot,'r')
-    mp.plot(xplot,ytarget,'b')
-    mp.show()
-#    quit()
 
 # ============================================================
 
