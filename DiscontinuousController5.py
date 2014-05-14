@@ -2,6 +2,9 @@ import random
 import math
 import feedback as fb
 import matplotlib.pyplot as mp
+import pvsioSocket as ps
+
+#ps.debug = False
 
 class System (fb.Component):
     def __init__(self):
@@ -11,8 +14,19 @@ class System (fb.Component):
 
     def work( self, u):
         self.xi += u * self.m
-        if( (self.t % 9 == 0) and self.m < 10): # (abs(self.xi) <= 100)):
+        if( (self.t % 9 == 0) and self.m < 10): 
             self.m = abs(u) * self.m # m(t) -> x(t), slope should not be negative
+
+            #count number of digits in x
+#            intx = int(self.xi)
+#            if intx > 0:
+#                digits = int(math.log10(intx))+1
+#            elif intx == 0:
+#                digits = 1
+#            else:
+#                digits = int(math.log10(-intx))+1 
+#            
+#            self.m = math.pow(10,digits-1)/10
 
         if(u == 0):
             self.m = 0.1
@@ -21,6 +35,26 @@ class System (fb.Component):
         self.t += 1
         
         return self.xi
+
+
+class Device (fb.Component):
+    def __init__(self):
+        self.xi = 0
+        self.prev = None
+        self.ws = None
+    
+    def work( self, u):
+        
+        if(self.ws == None): # not connected to server yet
+            self.ws,self.prev = ps.connect(u)         
+        else:
+            self.prev = ps.getDisplay(self.ws,u,self.prev)
+
+        self.xi = self.prev['left_display']
+        
+        return self.xi
+
+
 
 class Controller(fb.Component):
     def __init__( self, kp,k1,k2,xref, noise=True,delay=0):
@@ -95,15 +129,17 @@ class Controller(fb.Component):
         
 
 def setpoint(t):
-    return 810
+    return 800
 
 fb.DT = 0.1
 tm = 100 
-c = Controller( 1, 5.5, 4.5, 810,noise=False,delay=3 )
+c = Controller( 1, 5.5, 4.5, 810,noise=True,delay=3 )
 c2 = Controller( 1, 5.5, 4.5, 810,noise=False )
 
-p = System()
-p2= System()
+#p = System()
+#p2= System()
+p = Device()
+p2 = Device()
 
 fb.closed_loop(setpoint, c, p, tm)
 fb.closed_loop(setpoint, c2, p2, tm)
