@@ -5,6 +5,8 @@ import matplotlib.pyplot as mp
 import pvsioSocket as ps
 
 #ps.debug = False
+SWITCH_SENSITIVITY = 0.1
+NOISE_SIGMA = 10
 
 class System (fb.Component):
     def __init__(self):
@@ -65,7 +67,7 @@ class Controller(fb.Component):
         self.kc = 1
         self.u=0
         self.noise = noise
-        self.sigma = 10
+        self.sigma = NOISE_SIGMA
         self.z = 1
         self.p = 0
         self.square = False # boolean toggle for square wave
@@ -91,7 +93,7 @@ class Controller(fb.Component):
         if self.reference[-1] > 100: # for large setpoints, use larger constant value for switch signal
             self.switch = 100
         else:
-            self.switch = (0.1*self.reference[-1]) # for small setpoints, switch signal changes proportionately 
+            self.switch = (SWITCH_SENSITIVITY*self.reference[-1]) # for small setpoints, switch signal changes proportionately 
 
         print "Switch signal: ", self.switch
 
@@ -137,7 +139,7 @@ class Controller(fb.Component):
 
 def setpoint(t):
     #return 2.05
-    return 24.9
+    return 56.7
 
 fb.DT = 0.1
 tm = 100 
