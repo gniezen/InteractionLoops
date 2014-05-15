@@ -65,7 +65,7 @@ class Controller(fb.Component):
         self.kc = 1
         self.u=0
         self.noise = noise
-        self.sigma = 50
+        self.sigma = 10
         self.z = 1
         self.p = 0
         self.square = False # boolean toggle for square wave
@@ -74,7 +74,7 @@ class Controller(fb.Component):
         self.eplot = []
         self.xplot = []
         self.yplot =[]
-        self.reference =[]
+        self.reference =[xref]
 
         #self.random.seed(42) # make sure each Controller object uses same random stream to compare
 
@@ -88,7 +88,14 @@ class Controller(fb.Component):
         self.d = ( e - self.prev )/fb.DT
         #return self.kp * math.copysign(1,e)  
 
-        if (abs(e) > 100):
+        if self.reference[-1] > 100: # for large setpoints, use larger constant value for switch signal
+            self.switch = 100
+        else:
+            self.switch = (0.1*self.reference[-1]) # for small setpoints, switch signal changes proportionately 
+
+        print "Switch signal: ", self.switch
+
+        if (abs(e) > self.switch):
             if (abs(self.u-self.p) > 0):
                 self.z = 0
                 self.p = self.u
@@ -129,12 +136,13 @@ class Controller(fb.Component):
         
 
 def setpoint(t):
-    return 800
+    #return 2.05
+    return 24.9
 
 fb.DT = 0.1
 tm = 100 
-c = Controller( 1, 5.5, 4.5, 810,noise=True,delay=3 )
-c2 = Controller( 1, 5.5, 4.5, 810,noise=False )
+c = Controller( 1, 5.5, 4.5, setpoint(0),noise=True,delay=3 )
+c2 = Controller( 1, 5.5, 4.5, setpoint(0),noise=False )
 
 #p = System()
 #p2= System()
