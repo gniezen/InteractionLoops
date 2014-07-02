@@ -8,35 +8,35 @@ import pvsioSocket as ps
 SWITCH_SENSITIVITY = 0.1
 NOISE_SIGMA = 10
 
-class System (fb.Component):
-    def __init__(self):
-        self.xi = 0
-        self.m = 0.1 # internal multiplier (slope)
-        self.t = 0 # internal time counter, needed for adjusting slope
+#class System (fb.Component):
+#    def __init__(self):
+#        self.xi = 0
+#        self.m = 0.1 # internal multiplier (slope)
+#        self.t = 0 # internal time counter, needed for adjusting slope
 
-    def work( self, u):
-        self.xi += u * self.m
-        if( (self.t % 9 == 0) and self.m < 10): 
-            self.m = abs(u) * self.m # m(t) -> x(t), slope should not be negative
+#    def work( self, u):
+#        self.xi += u * self.m
+#        if( (self.t % 9 == 0) and self.m < 10): 
+#            self.m = abs(u) * self.m # m(t) -> x(t), slope should not be negative
 
-            #count number of digits in x
-#            intx = int(self.xi)
-#            if intx > 0:
-#                digits = int(math.log10(intx))+1
-#            elif intx == 0:
-#                digits = 1
-#            else:
-#                digits = int(math.log10(-intx))+1 
-#            
-#            self.m = math.pow(10,digits-1)/10
+#            #count number of digits in x
+##            intx = int(self.xi)
+##            if intx > 0:
+##                digits = int(math.log10(intx))+1
+##            elif intx == 0:
+##                digits = 1
+##            else:
+##                digits = int(math.log10(-intx))+1 
+##            
+##            self.m = math.pow(10,digits-1)/10
 
-        if(u == 0):
-            self.m = 0.1
-        
-        print "m=",self.m
-        self.t += 1
-        
-        return self.xi
+#        if(u == 0):
+#            self.m = 0.1
+#        
+#        print "m=",self.m
+#        self.t += 1
+#        
+#        return self.xi
 
 
 class Device (fb.Component):
@@ -90,6 +90,8 @@ class Controller(fb.Component):
         self.d = ( e - self.prev )/fb.DT
         #return self.kp * math.copysign(1,e)  
 
+        ## Begin - hybrid automation
+
         if self.reference[-1] > 100: # for large setpoints, use larger constant value for switch signal
             self.switch = 100
         else:
@@ -99,14 +101,16 @@ class Controller(fb.Component):
 
         if (abs(e) > self.switch):
             if (abs(self.u-self.p) > 0):
+                print "Z=0"
                 self.z = 0
                 self.p = self.u
         
             if (self.z <= 0):
+                print "Z=1"
                 self.z = 1
 
             self.u = self.z * (self.kp * ((self.k1 * math.copysign(1,e))-(self.k2*math.copysign(1,self.d)))) 
-        else: # |e(t)| <= 100
+        else: # |e(t)| <= switch signal
             self.square = not self.square # square wave
             print self.square
 
@@ -114,12 +118,15 @@ class Controller(fb.Component):
                 self.u = self.kc * (self.kp * ((self.k1 * math.copysign(1,e))-(self.k2*math.copysign(1,self.d))))       
             else:
                 self.u = 0
+        
+        ## End - hybrid automation
     
         self.prev = e
 
         print "self.u = ", self.u
         self.usignal.append(self.u)
         
+        ##Delay
         print "self.usignal[-1] = ", self.usignal[-1]              
         if self.delay > 0:
             if len(self.usignal) < self.delay:
@@ -139,7 +146,7 @@ class Controller(fb.Component):
 
 def setpoint(t):
     #return 2.05
-    return 56.7
+    return 54.3
 
 fb.DT = 0.1
 tm = 100 
