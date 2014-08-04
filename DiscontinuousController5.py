@@ -64,7 +64,7 @@ class Controller(fb.Component):
         self.kp = kp
         self.k1 = k1
         self.k2 = k2
-        self.kc = 1
+ #       self.kc = 1
         self.u=0
         self.noise = noise
         self.sigma = NOISE_SIGMA
@@ -100,22 +100,23 @@ class Controller(fb.Component):
         print "Switch signal: ", self.switch
 
         if (abs(e) > self.switch):
-            if (abs(self.u-self.p) > 0):
-                print "Z=0"
-                self.z = 0
-                self.p = self.u
+#            if (abs(self.u-self.p) > 0):
+#                print "Z=0"
+#                self.z = 0
+#                self.p = self.u
         
-            if (self.z <= 0):
-                print "Z=1"
-                self.z = 1
+#            if (self.z <= 0):
+#                print "Z=1"
+#                self.z = 1
 
-            self.u = self.z * (self.kp * ((self.k1 * math.copysign(1,e))-(self.k2*math.copysign(1,self.d)))) 
+#            self.u = self.z * (self.kp * ((self.k1 * math.copysign(1,e))-(self.k2*math.copysign(1,self.d))))
+            self.u = self.kp * ((self.k1 * math.copysign(1,e))-(self.k2*math.copysign(1,self.d)))
         else: # |e(t)| <= switch signal
             self.square = not self.square # square wave
             print self.square
 
             if(self.square):
-                self.u = self.kc * (self.kp * ((self.k1 * math.copysign(1,e))-(self.k2*math.copysign(1,self.d))))       
+                self.u =  (self.kp * ((self.k1 * math.copysign(1,e))-(self.k2*math.copysign(1,self.d))))       
             else:
                 self.u = 0
         
@@ -145,8 +146,8 @@ class Controller(fb.Component):
         
 
 def setpoint(t):
-    #return 2.05
-    return 54.3
+    return 2.05
+    #return 54.3
 
 fb.DT = 0.1
 tm = 100 
