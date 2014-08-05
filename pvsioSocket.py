@@ -2,7 +2,7 @@ from websocket import create_connection
 import json
 from fractions import Fraction
 
-debug = True
+debug = False
 
 command = ""
 
@@ -13,11 +13,13 @@ def convert(s):
         return float(Fraction(s))
 
 def parseOutput(output):
-    print "boutput ", output
+    if debug:
+        print "boutput ", output
     if not isinstance(output, basestring):
         output = output[0]
 
-    print "aoutput ", output
+    if debug:
+        print "aoutput ", output
     s = output.strip("(##)")
     d = dict(item.split(":=") for item in s.split(",")) # Generate dictionary
     return { k.strip():convert(v.strip()) for k, v in d.iteritems()} # Remove whitespace in dictionary
@@ -32,14 +34,16 @@ def sendCommand(ws, command, state):
     
     message = waitForType(ws, "pvsoutput")
     #message = json.loads(ws.recv())    
-    print "Message: ", message
+    if debug:
+        print "Message: ", message
     return message
 
 
 def waitForType(ws,reqType):
 
     msg= json.loads(ws.recv())
-    print "Msg:", msg
+    if debug:
+        print "Msg:", msg
     state = msg['type']
 
     if debug:
@@ -82,13 +86,15 @@ def getDisplay(ws,button,prev):
 
     #command = pvsCommand(state,button)
     command = pvsCommand(button)    
-    print command
+    if debug:
+        print command
 
     message = sendCommand(ws,command,prev)
    
     result = message['data']
     output = parseOutput(result)
-    print 'Output: ', output
+    if debug:
+        print 'Output: ', output
 
     ldisplay = output['left_display']
 
@@ -103,7 +109,8 @@ def connect(firstCommand):
 
     waitForType(ws,"processReady")
 
-    print "Connected, sending first command.."
+    if debug:
+        print "Connected, sending first command.."
 
     command = pvsCommand(firstCommand)
 
@@ -111,14 +118,14 @@ def connect(firstCommand):
 
     #msg = json.loads(ws.recv())
     msg = waitForType(ws,'pvsoutput')
-    print msg
+    if debug:
+        print msg
     
     result = msg['data']
     output = parseOutput(result)
-    print 'Output: ', output
+    if debug:    
+        print 'Output: ', output
     
-    print "sent."
-
     return ws, output
 
 def disconnect(ws):

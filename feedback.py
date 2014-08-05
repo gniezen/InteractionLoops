@@ -2,6 +2,7 @@
 import math
 import random
 import matplotlib.pyplot as mp
+import logging
 
 DT = None # Sampling interval - defaults to None, must be set explicitly
 
@@ -278,7 +279,7 @@ def open_loop( setpoint, controller, plant, tm=5000 ):
         r = setpoint(t)  # This is the controller input, not really the setpt!
         u = controller.work( r )
         y = plant.work( u )
-
+        
         print t, t*DT, r, 0, u, u, y, y, plant.monitoring()
 
     quit()
@@ -286,7 +287,6 @@ def open_loop( setpoint, controller, plant, tm=5000 ):
 def closed_loop( setpoint, controller, plant, tm=5000, inverted=False,
                  actuator=Identity(), returnfilter=Identity() ):
     z = 0
-    print "t, t*DT, r, e, u, v, y, z"
     for t in range( tm ):
         r = setpoint(t)
         e = r - z
@@ -296,11 +296,12 @@ def closed_loop( setpoint, controller, plant, tm=5000, inverted=False,
         y = plant.work(v)
         z = returnfilter.work(y)
 
-        print "T=",t," T*DT=", t*DT, " r=", r, " e=",e," u=", u," v=", v," y=", y," z=", z, plant.monitoring()
+        logging.debug("t=%.2f, t*DT=%.2f, r=%.2f, e=%.2f, u=%.2f, v=%.2f, y=%.2f, z=%.2f, plant=%s",t,t*DT,r,e,u,v,y,z, plant.monitoring())
 
-        #controller.xplot.append(t)
+        controller.xplot.append(t)
         controller.yplot.append(y)
-        controller.reference.append(setpoint(t))
+        if(t != 0):
+            controller.reference.append(setpoint(t))
 
 
 # ============================================================
