@@ -296,7 +296,7 @@ def closed_loop( setpoint, controller, plant, tm=5000, inverted=False,
         y = plant.work(v)
         z = returnfilter.work(y)
 
-        logging.debug("t=%.2f, t*DT=%.2f, r=%.2f, e=%.2f, u=%.2f, v=%.2f, y=%.2f, z=%.2f, plant=%s",t,t*DT,r,e,u,v,y,z, plant.monitoring())
+        logging.debug("t=%.2f, t*DT=%.2f, r=%.2f, e=%.2f, u=%.2f, v=%.2f, y=%.2f, z=%.2f",t,t*DT,r,e,u,v,y,z)
 
         controller.xplot.append(t)
         controller.yplot.append(y)
