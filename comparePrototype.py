@@ -9,7 +9,12 @@ from datetime import datetime
 import logging
 from scipy import signal
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(filename='compare.log',format='%(asctime)s %(message)s', level=logging.DEBUG, filemode='w')
+console = logging.StreamHandler()
+console.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(levelname)s: %(message)s')
+console.setFormatter(formatter)
+logging.getLogger('').addHandler(console)
 
 SWITCH_SENSITIVITY = 0.1
 NOISE_SIGMA = 10
@@ -42,6 +47,8 @@ class Device (fb.Component):
 class Controller(fb.Component):
     def __init__( self, kp,k1,k2,xref, hasNoise=True,delay=0):
         self.prev = xref
+        self.prev2 = xref
+        self.yprev = 1
         self.kp = kp
         self.k1 = k1
         self.k2 = k2
@@ -59,15 +66,28 @@ class Controller(fb.Component):
         self.reference =[xref]
         self.h=signal.firwin(6, 0.1) # simple low-pass filter, FIR design using window method, 15 taps and 0.1 as cutoff
         self.noise = []
+        self.signchanged = 0
 
     def work( self, e):
+        
+        # stop if target reached
+        if(len(self.usignal)>0):
+            if(e == 0 and self.usignal[-1] == 0):
+                self.eplot.append(0);
+                logging.debug("ENDED")
+                return 0;
 
+        logging.debug("Actual error: " + str(e))
         e += self._noise()  # Introduce noise, if any 
         
         logging.debug("Perceived error: " + str(e))   
         self.eplot.append(e)    
 
-        self.d = ( e - self.prev )/fb.DT
+        self.d = ( e - self.prev )/fb.DT # First derivative
+        self.d2 = (e - 2*self.prev + self.prev2)/((fb.DT)**2) # Second derivative
+
+        logging.debug("First derivative: " +str (self.d))
+        logging.debug("Second derivative: " + str(self.d2))
         
         ## Begin - hybrid automation
 
@@ -78,30 +98,44 @@ class Controller(fb.Component):
         logging.debug("Switch signal: %.2f", self.switch)
 
         if (abs(e) > self.switch):
-            self.u = self.kp * ((self.k1 * math.copysign(1,e))-(self.k2*math.copysign(1,self.d)))
+            self.u = self.kp * ((self.k1 * math.copysign(1, e))-(self.k2 * math.copysign(1,self.d)))
         else: # |e(t)| <= switch signal
             self.square = not self.square # square wave
 
             if(self.square):
-                self.u =  (self.kp * ((self.k1 * math.copysign(1,e))-(self.k2*math.copysign(1,self.d))))       
+
+#                if(abs(self.signchanged)>0):
+#                    logging.debug("USE SIGNCHANGED")
+#                    self.u = self.signchanged
+#                else:
+#                    #when stepping, if the error changed signs, use a small step
+#                    if((math.copysign(1,self.prev)+math.copysign(1,e)) == 0):
+#                        self.signchanged=abs(self.k1-self.k2)*math.copysign(1,e)
+#                        logging.debug("ERROR CHANGED SIGNS, SO U(T): " + str(self.signchanged))
+#                    else:
+#                        # This is the default behaviour
+                 self.u =  (self.kp * ((self.k1 * math.copysign(1,e))-(self.k2 * math.copysign(1,self.d))))       
             else:
                 self.u = 0
         
         ## End - hybrid automation
     
+        self.prev2 = self.prev
         self.prev = e
         logging.debug("self.u = %.2f", self.u)
         self.usignal.append(self.u)
         
-        ##Delay
-        logging.debug("self.usignal[-1] = %.2f ", self.usignal[-1])
-        if self.delay > 0:
-            if len(self.usignal) < self.delay:
+
+        varDelay = random.randint(0,self.delay)
+
+        if varDelay > 0:
+            if len(self.usignal) < varDelay:
                 self.u = 0
             else:
-                self.u = self.usignal[-self.delay] #delay u(t) by x timesteps
-
-
+                ##Delay
+                logging.debug("self.usignal[-%d] = %.2f ",varDelay, self.usignal[-varDelay])
+                self.u = self.usignal[-varDelay] #delay u(t) by x timesteps
+        
         return self.u
 
     def _noise(self):
@@ -124,7 +158,7 @@ tm = 100
 
 for i in range(0,33):
     
-    c = Controller( 1, 5.5, 4.5, setpoint(0),hasNoise=True, delay=2 )
+    c = Controller( 1, 5.5, 4.5, setpoint(0),hasNoise=True, delay=2)
 
     p = Device()
 
