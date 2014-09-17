@@ -66,7 +66,8 @@ class Controller(fb.Component):
         self.reference =[xref]
         self.h=signal.firwin(6, 0.1) # simple low-pass filter, FIR design using window method, 15 taps and 0.1 as cutoff
         self.noise = []
-        self.signchanged = 0
+        #self.signchanged = 0
+        self.crossings = 0
 
     def work( self, e):
         
@@ -88,8 +89,21 @@ class Controller(fb.Component):
 
         logging.debug("First derivative: " +str (self.d))
         logging.debug("Second derivative: " + str(self.d2))
+
+        if len(self.yplot) > 2:
+            if( ((self.yplot[-2] > self.reference[-1]) and (self.yplot[-1] < self.reference[-1]))
+                or ((self.yplot[-2] < self.reference[-1]) and (self.yplot[-1] > self.reference[-1])) ):
+                    self.crossings +=1
+
         
         ## Begin - hybrid automation
+        
+        # Count number of crossings
+
+        #if(self.crossings > 2):
+        #    self.switch = 1000
+        #    self.delay = 0
+        
 
         if self.reference[-1] > 100: # for large setpoints, use larger constant value for switch signal
             self.switch = 100
@@ -113,8 +127,12 @@ class Controller(fb.Component):
 #                        self.signchanged=abs(self.k1-self.k2)*math.copysign(1,e)
 #                        logging.debug("ERROR CHANGED SIGNS, SO U(T): " + str(self.signchanged))
 #                    else:
-#                        # This is the default behaviour
-                 self.u =  (self.kp * ((self.k1 * math.copysign(1,e))-(self.k2 * math.copysign(1,self.d))))       
+
+                if((self.crossings > 2) and (e < 0.1)):
+                    self.u = self.kp * (self.k1 - self.k2) * math.copysign(1,e)
+                else:                    
+                    # This is the default behaviour
+                    self.u =  (self.kp * ((self.k1 * math.copysign(1,e))-(self.k2 * math.copysign(1,self.d))))       
             else:
                 self.u = 0
         
@@ -126,16 +144,17 @@ class Controller(fb.Component):
         self.usignal.append(self.u)
         
 
-        varDelay = random.randint(0,self.delay)
+        if(self.delay > 0):
+            varDelay = random.randint(1,self.delay)
 
-        if varDelay > 0:
-            if len(self.usignal) < varDelay:
-                self.u = 0
-            else:
-                ##Delay
-                logging.debug("self.usignal[-%d] = %.2f ",varDelay, self.usignal[-varDelay])
-                self.u = self.usignal[-varDelay] #delay u(t) by x timesteps
-        
+            if varDelay > 0:
+                if len(self.usignal) < varDelay:
+                    self.u = 0
+                else:
+                    ##Delay
+                    logging.debug("self.usignal[-%d] = %.2f ",varDelay, self.usignal[-varDelay])
+                    self.u = self.usignal[-varDelay] #delay u(t) by x timesteps
+
         return self.u
 
     def _noise(self):
@@ -163,6 +182,7 @@ for i in range(0,33):
     p = Device()
 
     fb.closed_loop(setpoint, c, p, tm)
+    logging.debug("Crossings: " +str(c.crossings))
 
 
     ppl.plot(ax,c.xplot,c.reference,'b')
