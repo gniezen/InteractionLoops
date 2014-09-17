@@ -144,7 +144,8 @@ class Controller(fb.Component):
         self.usignal.append(self.u)
         
 
-        if(self.delay > 0):
+        # Introduce variable delay, but not for stepping behaviour
+        if( (self.delay > 0) and (abs(e) > self.switch)):
             varDelay = random.randint(1,self.delay)
 
             if varDelay > 0:
