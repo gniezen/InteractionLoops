@@ -2,7 +2,7 @@ from websocket import create_connection
 import json
 from fractions import Fraction
 
-debug = False
+debug = True
 
 command = ""
 
@@ -32,7 +32,8 @@ def sendCommand(ws, command, state):
         print "Sending:", d
     ws.send(json.dumps(d))
     
-    message = waitForType(ws, "pvsoutput")
+    message = waitForType(ws,"commandResult")
+    #message = waitForType(ws, "pvsoutput")
     #message = json.loads(ws.recv())    
     if debug:
         print "Message: ", message
@@ -105,7 +106,8 @@ def getDisplay(ws,button,prev):
 
 def connect(firstCommand):
     ws = create_connection("ws://localhost:8082/")
-    ws.send('{"type":"startProcess","data":{"fileName":"public/projects/AlarisGH_AsenaCC/alarisGH_AsenaCC"}}')
+    #ws.send('{"type":"startProcess","data":{"fileName":"examples/projects/AlarisGH_AsenaCC/alarisGH_AsenaCC"}}')
+    ws.send('{"type":"startProcess","data":{"projectName":"AlarisGH_AsenaCC", "fileName": "alarisGH_AsenaCC"}}')
 
     waitForType(ws,"processReady")
 
@@ -117,7 +119,8 @@ def connect(firstCommand):
     ws.send('{"type":"sendCommand","data":{"command":"'+command+'((# left_display := 0, step := 1, timer := 5 #));"}}')
 
     #msg = json.loads(ws.recv())
-    msg = waitForType(ws,'pvsoutput')
+    #msg = waitForType(ws,'pvsoutput')
+    msg = waitForType(ws,'commandResult')
     if debug:
         print msg
     
