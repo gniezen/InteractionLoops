@@ -128,7 +128,7 @@ class Controller(fb.Component):
 #                        logging.debug("ERROR CHANGED SIGNS, SO U(T): " + str(self.signchanged))
 #                    else:
 
-                if((self.crossings > 2) and (e < 0.1)):
+                if((self.crossings > 2) and (abs(e) < 1.0)): #if the error is very small, use small chevron and just current error
                     self.u = self.kp * (self.k1 - self.k2) * math.copysign(1,e)
                 else:                    
                     # This is the default behaviour
@@ -145,7 +145,7 @@ class Controller(fb.Component):
         
 
         # Introduce variable delay, but not for stepping behaviour
-        if( (self.delay > 0) and (abs(e) > self.switch)):
+        if( (self.delay > 0) and (abs(self.prev2) > self.switch)):
             varDelay = random.randint(1,self.delay)
 
             if varDelay > 0:
@@ -167,7 +167,7 @@ class Controller(fb.Component):
         logging.debug("Random: %.2f", y[-1])
         return y[-1]
 
-        
+
 
 def setpoint(t):
     #return 2.05

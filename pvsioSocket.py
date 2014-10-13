@@ -2,7 +2,7 @@ from websocket import create_connection
 import json
 from fractions import Fraction
 
-debug = True
+debug = False
 
 command = ""
 
