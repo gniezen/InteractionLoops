@@ -128,7 +128,7 @@ class Controller(fb.Component):
 #                        logging.debug("ERROR CHANGED SIGNS, SO U(T): " + str(self.signchanged))
 #                    else:
 
-                if((self.crossings > 2) and (abs(e) < 1.0)): #if the error is very small, use small chevron and just current error
+                if((self.crossings > 2) and (abs(e) < 1.0)): #if the error is small, only use small chevron
                     self.u = self.kp * (self.k1 - self.k2) * math.copysign(1,e)
                 else:                    
                     # This is the default behaviour
@@ -138,14 +138,12 @@ class Controller(fb.Component):
         
         ## End - hybrid automation
     
-        self.prev2 = self.prev
-        self.prev = e
+        # Record output signal
         logging.debug("self.u = %.2f", self.u)
         self.usignal.append(self.u)
         
-
         # Introduce variable delay, but not for stepping behaviour
-        if( (self.delay > 0) and (abs(self.prev2) > self.switch)):
+        if( (self.delay > 0) and (abs(self.prev) > self.switch)):
             varDelay = random.randint(1,self.delay)
 
             if varDelay > 0:
@@ -155,6 +153,10 @@ class Controller(fb.Component):
                     ##Delay
                     logging.debug("self.usignal[-%d] = %.2f ",varDelay, self.usignal[-varDelay])
                     self.u = self.usignal[-varDelay] #delay u(t) by x timesteps
+        
+        #Record previous error to calculate derivatives
+        self.prev2 = self.prev
+        self.prev = e
 
         return self.u
 
