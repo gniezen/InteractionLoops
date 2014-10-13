@@ -128,7 +128,7 @@ class Controller(fb.Component):
 #                        logging.debug("ERROR CHANGED SIGNS, SO U(T): " + str(self.signchanged))
 #                    else:
 
-                if((self.crossings > 2) and (abs(e) < 1.0)): #if overshot twice and the error is small, only use small chevron
+                if((self.crossings > 2) and (abs(e) < 1.0)): #if overshot three times or more and the error is small, only use small chevron
                     self.u = self.kp * (self.k1 - self.k2) * math.copysign(1,e)
                 else:                    
                     # This is the default behaviour
