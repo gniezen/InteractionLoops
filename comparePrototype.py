@@ -64,7 +64,7 @@ class Controller(fb.Component):
         self.xplot = []
         self.yplot =[]
         self.reference =[xref]
-        self.h=signal.firwin(6, 0.1) # simple low-pass filter, FIR design using window method, 15 taps and 0.1 as cutoff
+        self.h=signal.firwin(9, 0.1) # simple low-pass filter, FIR design using window method, 15 taps and 0.1 as cutoff
         self.noise = []
         #self.signchanged = 0
         self.crossings = 0
@@ -162,13 +162,13 @@ class Controller(fb.Component):
 
     def _noise(self):
         if self.hasNoise == False: return 0
-        if(random.random()*100 < 80):
-            return 0;
+        #if(random.random()*100 < 80):
+        #    return 0;
         self.noise.append(fb.DT*random.gauss( 0, self.sigma ))
         y=signal.lfilter( self.h, 1.0, self.noise)
         logging.debug("Random: %.2f", y[-1])
         return y[-1]
-
+        #return self.noise[-1]
 
 
 def setpoint(t):
@@ -176,7 +176,7 @@ def setpoint(t):
     return 56.7
 
 fb.DT = 0.1
-tm = 100 
+tm = 200 
 
 for i in range(0,33):
     
@@ -187,9 +187,10 @@ for i in range(0,33):
     fb.closed_loop(setpoint, c, p, tm)
     logging.debug("Crossings: " +str(c.crossings))
 
-
-    ppl.plot(ax,c.xplot,c.reference,'b')
-    ppl.plot(ax,c.xplot, c.yplot)
+    newxplot = [x / 4.0 for x in c.xplot] # Each time step is 250ms
+    
+    ppl.plot(ax,newxplot,c.reference,'b')
+    ppl.plot(ax,newxplot, c.yplot)
 
 print datetime.now() - tstart
 
