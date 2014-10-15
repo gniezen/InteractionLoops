@@ -142,7 +142,6 @@ class Controller(fb.Component):
         ## End - hybrid automation
         
         # Record output signal
-        logging.debug("self.u = %.2f", self.u)
         self.usignal.append(self.u)
         
         # Introduce variable delay, but not for stepping behaviour
@@ -159,12 +158,13 @@ class Controller(fb.Component):
                     
                     
         # If output signal has changed signs, first set to zero to simulate finger switching between buttons
-        if ((self.u != 0)):
+        if ((self.u != 0) and (len(self.usignal) > 0)):
              self.sign = self.u / abs(self.u)
 
              if self.sign == -self.last_sign:
                  self.last_sign = self.sign
                  self.u = 0
+                 self.usignal[-1]=self.u #replace previous recording of output signal
         
         
         #Record previous error to calculate derivatives
@@ -172,7 +172,7 @@ class Controller(fb.Component):
         self.prev = e
         
 
-
+        logging.debug("self.u = %.2f", self.u)
         return self.u
 
     def _noise(self):
