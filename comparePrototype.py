@@ -67,7 +67,6 @@ class Controller(fb.Component):
         self.h=signal.firwin(9, 0.1) # simple low-pass filter, FIR design using window method, 15 taps and 0.1 as cutoff
                                      # taps = Length of the filter (number of coefficients, i.e. the filter order + 1).
         self.noise = []
-        #self.signchanged = 0
         self.crossings = 0
         self.last_sign = 1
 
@@ -92,6 +91,7 @@ class Controller(fb.Component):
         logging.debug("First derivative: " +str (self.d))
         logging.debug("Second derivative: " + str(self.d2))
 
+        # Count number of crossings
         if len(self.yplot) > 2:
             if( ((self.yplot[-2] > self.reference[-1]) and (self.yplot[-1] < self.reference[-1]))
                 or ((self.yplot[-2] < self.reference[-1]) and (self.yplot[-1] > self.reference[-1])) ):
@@ -99,13 +99,6 @@ class Controller(fb.Component):
 
         
         ## Begin - hybrid automation
-        
-        # Count number of crossings
-
-        #if(self.crossings > 2):
-        #    self.switch = 1000
-        #    self.delay = 0
-        
 
         if self.reference[-1] > 100: # for large setpoints, use larger constant value for switch signal
             self.switch = 100
@@ -120,17 +113,6 @@ class Controller(fb.Component):
             self.square = not self.square # square wave
 
             if(self.square):
-
-#                if(abs(self.signchanged)>0):
-#                    logging.debug("USE SIGNCHANGED")
-#                    self.u = self.signchanged
-#                else:
-#                    #when stepping, if the error changed signs, use a small step
-#                    if((math.copysign(1,self.prev)+math.copysign(1,e)) == 0):
-#                        self.signchanged=abs(self.k1-self.k2)*math.copysign(1,e)
-#                        logging.debug("ERROR CHANGED SIGNS, SO U(T): " + str(self.signchanged))
-#                    else:
-
                 if((self.crossings > 2) and (abs(e) < 1.0)): #if overshot three times or more and the error is small, only use small chevron
                     self.u = self.kp * (self.k1 - self.k2) * math.copysign(1,e)
                 else:                    
@@ -214,7 +196,8 @@ logging.debug("Time to run: " + str(datetime.now() - tstart))
 mp.xlabel("Time (s)")
 mp.ylabel("Displayed value")
 mp.text(0.5,setpoint(0)+0.5,"Setpoint")         
-#fig.set_size_inches(11.69, 8.27)
+fig = mp.gcf() # get current figure
+fig.set_size_inches(11.69, 8.27)
 mp.show()
 fig.savefig("compareResults"+str(setpoint(0))+".pdf",format="pdf",papertype='a4',dpi=100)
 mp.close()
