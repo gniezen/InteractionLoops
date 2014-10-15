@@ -69,6 +69,7 @@ class Controller(fb.Component):
         self.noise = []
         #self.signchanged = 0
         self.crossings = 0
+        self.last_sign = 1
 
     def work( self, e):
         
@@ -114,6 +115,7 @@ class Controller(fb.Component):
 
         if (abs(e) > self.switch):
             self.u = self.kp * ((self.k1 * math.copysign(1, e))-(self.k2 * math.copysign(1,self.d)))
+            
         else: # |e(t)| <= switch signal
             self.square = not self.square # square wave
 
@@ -138,7 +140,7 @@ class Controller(fb.Component):
                 self.u = 0
         
         ## End - hybrid automation
-    
+        
         # Record output signal
         logging.debug("self.u = %.2f", self.u)
         self.usignal.append(self.u)
@@ -154,10 +156,22 @@ class Controller(fb.Component):
                     ##Delay
                     logging.debug("self.usignal[-%d] = %.2f ",varDelay, self.usignal[-varDelay])
                     self.u = self.usignal[-varDelay] #delay u(t) by x timesteps
+                    
+                    
+        # If output signal has changed signs, first set to zero to simulate finger switching between buttons
+        if ((self.u != 0)):
+             self.sign = self.u / abs(self.u)
+
+             if self.sign == -self.last_sign:
+                 self.last_sign = self.sign
+                 self.u = 0
+        
         
         #Record previous error to calculate derivatives
         self.prev2 = self.prev
         self.prev = e
+        
+
 
         return self.u
 
@@ -193,14 +207,14 @@ for i in range(0,33):
     ppl.plot(ax,newxplot,c.reference,'b')
     ppl.plot(ax,newxplot, c.yplot)
 
-print datetime.now() - tstart
+logging.debug("Time to run: " + str(datetime.now() - tstart))
 
 #mp.text(0.7,0.9,"Overshoot = "+str(overshoot),transform = ax.transAxes) 
 #mp.title("Reference = "+ str(ref)+ " (" + str(i) + " trials)")  
 mp.xlabel("Time (s)")
 mp.ylabel("Displayed value")
 mp.text(0.5,setpoint(0)+0.5,"Setpoint")         
-fig.set_size_inches(11.69, 8.27)
+#fig.set_size_inches(11.69, 8.27)
 mp.show()
 fig.savefig("compareResults"+str(setpoint(0))+".pdf",format="pdf",papertype='a4',dpi=100)
 mp.close()
