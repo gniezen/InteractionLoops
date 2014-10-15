@@ -22,7 +22,7 @@ NOISE_SIGMA = 10
 tstart = datetime.now()
 
 with ppl.pretty:
-    fig = mp.figure()
+    fig = mp.figure(figsize=(8,6))
     ax = fig.add_subplot(111) 
 
 class Device (fb.Component):
@@ -65,6 +65,7 @@ class Controller(fb.Component):
         self.yplot =[]
         self.reference =[xref]
         self.h=signal.firwin(9, 0.1) # simple low-pass filter, FIR design using window method, 15 taps and 0.1 as cutoff
+                                     # taps = Length of the filter (number of coefficients, i.e. the filter order + 1).
         self.noise = []
         #self.signchanged = 0
         self.crossings = 0
@@ -176,7 +177,7 @@ def setpoint(t):
     return 56.7
 
 fb.DT = 0.1
-tm = 200 
+tm = 160 
 
 for i in range(0,33):
     
@@ -195,7 +196,10 @@ for i in range(0,33):
 print datetime.now() - tstart
 
 #mp.text(0.7,0.9,"Overshoot = "+str(overshoot),transform = ax.transAxes) 
-#mp.title("Reference = "+ str(ref)+ " (" + str(i) + " trials)")           
+#mp.title("Reference = "+ str(ref)+ " (" + str(i) + " trials)")  
+mp.xlabel("Time (s)")
+mp.ylabel("Displayed value")
+mp.text(0.5,setpoint(0)+0.5,"Setpoint")         
 fig.set_size_inches(11.69, 8.27)
 mp.show()
 fig.savefig("compareResults"+str(setpoint(0))+".pdf",format="pdf",papertype='a4',dpi=100)
