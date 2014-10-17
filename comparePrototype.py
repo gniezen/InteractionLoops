@@ -8,6 +8,7 @@ import prettyplotlib as ppl
 from datetime import datetime
 import logging
 from scipy import signal
+import numpy as np
 
 logging.basicConfig(filename='compare.log',format='%(asctime)s %(message)s', level=logging.DEBUG, filemode='w')
 console = logging.StreamHandler()
@@ -20,6 +21,8 @@ SWITCH_SENSITIVITY = 0.1
 NOISE_SIGMA = 10
 
 tstart = datetime.now()
+
+speed = []
 
 with ppl.pretty:
     fig = mp.figure(figsize=(8,6))
@@ -69,6 +72,7 @@ class Controller(fb.Component):
         self.noise = []
         self.crossings = 0
         self.last_sign = 1
+        self.ended = False
 
     def work( self, e):
         
@@ -76,7 +80,11 @@ class Controller(fb.Component):
         if(len(self.usignal)>0):
             if(e == 0 and self.usignal[-1] == 0):
                 self.eplot.append(0);
-                logging.debug("ENDED")
+                if self.ended == False:
+                    logging.debug("ENDED")
+                    speed.append((len(self.usignal)-1)/4.0)
+                    logging.debug("Speed: " + str(speed[-1]))
+                    self.ended = True;
                 return 0;
 
         logging.debug("Actual error: " + str(e))
@@ -170,7 +178,7 @@ class Controller(fb.Component):
 
 def setpoint(t):
     #return 2.05
-    return 56.7
+    return 6.7
 
 fb.DT = 0.1
 tm = 160 
@@ -191,11 +199,16 @@ for i in range(0,33):
 
 logging.debug("Time to run: " + str(datetime.now() - tstart))
 
+print speed
+speed = np.array(speed)
+logging.debug("Mean: " + str(np.mean(speed)))
+logging.debug("Standard deviation: " + str(np.std(speed)))
+
 #mp.text(0.7,0.9,"Overshoot = "+str(overshoot),transform = ax.transAxes) 
 #mp.title("Reference = "+ str(ref)+ " (" + str(i) + " trials)")  
 mp.xlabel("Time (s)")
 mp.ylabel("Displayed value")
-mp.text(0.5,setpoint(0)+0.5,"Setpoint")         
+mp.text(0.5,setpoint(0)+0.1,"Setpoint")         
 fig = mp.gcf() # get current figure
 fig.set_size_inches(11.69, 8.27)
 mp.show()
