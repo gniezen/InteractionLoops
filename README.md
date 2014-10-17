@@ -9,3 +9,6 @@ Modelling dynamic human-device interaction using feedback control
 - Install PrettyPlotLib: http://olgabot.github.io/prettyplotlib/
 - Install pvsio-web: https://github.com/thehogfather/pvsio-web
 
+## Running
+- Run pvsio-web: $./start.sh
+- In another terminal, run the simulation: python comparePrototype.py
