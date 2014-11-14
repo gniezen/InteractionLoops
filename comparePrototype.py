@@ -10,6 +10,8 @@ import logging
 from scipy import signal
 import numpy as np
 
+
+## Set up logging
 logging.basicConfig(filename='compare.log',format='%(asctime)s %(message)s', level=logging.DEBUG, filemode='w')
 console = logging.StreamHandler()
 console.setLevel(logging.DEBUG)
@@ -20,13 +22,14 @@ logging.getLogger('').addHandler(console)
 SWITCH_SENSITIVITY = 0.1
 NOISE_SIGMA = 10
 
-tstart = datetime.now()
+tstart = datetime.now() # Used to calculcate time to run simulation
+speed = [] # Used to calculcate average time to finish for iterations
 
-speed = []
-
+# Set up graphs
 with ppl.pretty:
     fig = mp.figure(figsize=(8,6))
     ax = fig.add_subplot(111) 
+
 
 class Device (fb.Component):
     def __init__(self):
@@ -36,10 +39,10 @@ class Device (fb.Component):
     
     def work( self, u):
         
-        if(self.ws == None): # not connected to server yet
-            self.ws,self.prev = ps.connect(u)         
+        if(self.ws == None): 
+            self.ws,self.prev = ps.connect(u) # connect to pvsio-web server       
         else:
-            self.prev = ps.getDisplay(self.ws,u,self.prev)
+            self.prev = ps.getDisplay(self.ws,u,self.prev) # Get displayed value from pvsio-web
 
         self.xi = self.prev['left_display']
         
@@ -58,8 +61,6 @@ class Controller(fb.Component):
         self.u=0
         self.hasNoise = hasNoise
         self.sigma = NOISE_SIGMA
-        self.z = 1
-        self.p = 0
         self.square = False # boolean toggle for square wave
         self.delay = delay
         self.usignal = []
@@ -67,7 +68,7 @@ class Controller(fb.Component):
         self.xplot = []
         self.yplot =[]
         self.reference =[xref]
-        self.h=signal.firwin(9, 0.1) # simple low-pass filter, FIR design using window method, 15 taps and 0.1 as cutoff
+        self.h=signal.firwin(9, 0.1) # simple low-pass filter, FIR design using window method, 9 taps and 0.1 as cutoff
                                      # taps = Length of the filter (number of coefficients, i.e. the filter order + 1).
         self.noise = []
         self.crossings = 0
@@ -81,7 +82,7 @@ class Controller(fb.Component):
             if(e == 0 and self.usignal[-1] == 0):
                 self.eplot.append(0);
                 if self.ended == False:
-                    logging.debug("ENDED")
+                    logging.debug("Reached target value")
                     speed.append((len(self.usignal)-1)/4.0)
                     logging.debug("Speed: " + str(speed[-1]))
                     self.ended = True;
@@ -165,19 +166,18 @@ class Controller(fb.Component):
         logging.debug("self.u = %.2f", self.u)
         return self.u
 
+
     def _noise(self):
-        if self.hasNoise == False: return 0
-        #if(random.random()*100 < 80):
-        #    return 0;
+        if self.hasNoise == False: 
+            return 0
+
         self.noise.append(fb.DT*random.gauss( 0, self.sigma ))
         y=signal.lfilter( self.h, 1.0, self.noise)
         logging.debug("Random: %.2f", y[-1])
         return y[-1]
-        #return self.noise[-1]
 
 
 def setpoint(t):
-    #return 2.05
     return 6.7
 
 fb.DT = 0.1
@@ -199,13 +199,10 @@ for i in range(0,33):
 
 logging.debug("Time to run: " + str(datetime.now() - tstart))
 
-print speed
 speed = np.array(speed)
 logging.debug("Mean: " + str(np.mean(speed)))
 logging.debug("Standard deviation: " + str(np.std(speed)))
 
-#mp.text(0.7,0.9,"Overshoot = "+str(overshoot),transform = ax.transAxes) 
-#mp.title("Reference = "+ str(ref)+ " (" + str(i) + " trials)")  
 mp.xlabel("Time (s)")
 mp.ylabel("Displayed value")
 mp.text(0.5,setpoint(0)+0.1,"Setpoint")         
