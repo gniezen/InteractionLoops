@@ -9,6 +9,7 @@ from datetime import datetime
 import logging
 from scipy import signal
 import numpy as np
+import decimal
 
 
 ## Set up logging
@@ -79,6 +80,13 @@ class Controller(fb.Component):
         self.crossings = 0
         self.last_sign = 1
         self.ended = False
+
+        d = decimal.Decimal(str(xref))
+        places = abs(d.as_tuple().exponent)
+        if(places > 1):
+            logging.debug("Setpoint has two decimal places")
+            self.sigma = 1 # use smaller noise signal
+
 
     def work( self, e):
         
