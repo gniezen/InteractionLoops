@@ -28,7 +28,12 @@ speed = [] # Used to calculcate average time to finish for iterations
 # Set up graphs
 with ppl.pretty:
     fig = mp.figure(figsize=(8,6))
-    ax = fig.add_subplot(111) 
+    ax = fig.add_subplot(111)
+
+if len(sys.argv) > 1:
+    ref = float(sys.argv[1])
+else:
+    ref = 56.7 
 
 
 class Device (fb.Component):
@@ -178,7 +183,7 @@ class Controller(fb.Component):
 
 
 def setpoint(t):
-    return 6.7
+    return ref
 
 fb.DT = 0.1
 tm = 160 
@@ -200,8 +205,8 @@ for i in range(0,33):
 logging.debug("Time to run: " + str(datetime.now() - tstart))
 
 speed = np.array(speed)
-logging.debug("Mean: " + str(np.mean(speed)))
-logging.debug("Standard deviation: " + str(np.std(speed)))
+logging.info("Mean: " + str(np.mean(speed)))
+logging.info("Standard deviation: " + str(np.std(speed)))
 
 mp.xlabel("Time (s)")
 mp.ylabel("Displayed value")
@@ -209,7 +214,7 @@ mp.text(0.5,setpoint(0)+0.1,"Setpoint")
 fig = mp.gcf() # get current figure
 fig.set_size_inches(11.69, 8.27)
 mp.show()
-fig.savefig("compareResults"+str(setpoint(0))+".pdf",format="pdf",papertype='a4',dpi=100)
+fig.savefig("compare/compareResults"+str(setpoint(0))+".pdf",format="pdf",papertype='a4',dpi=100)
 mp.close()
 
 
