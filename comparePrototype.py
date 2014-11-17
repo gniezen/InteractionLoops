@@ -13,9 +13,10 @@ import decimal
 
 
 ## Set up logging
-logging.basicConfig(filename='compare.log',format='%(asctime)s %(message)s', level=logging.DEBUG, filemode='w')
+#%(asctime)s 
+logging.basicConfig(filename='compare.log',format='%(message)s', level=logging.INFO)
 console = logging.StreamHandler()
-console.setLevel(logging.DEBUG)
+console.setLevel(logging.INFO)
 formatter = logging.Formatter('%(levelname)s: %(message)s')
 console.setFormatter(formatter)
 logging.getLogger('').addHandler(console)
@@ -85,7 +86,8 @@ class Controller(fb.Component):
         places = abs(d.as_tuple().exponent)
         if(places > 1):
             logging.debug("Setpoint has two decimal places")
-            self.sigma = 1 # use smaller noise signal
+            self.sigma = NOISE_SIGMA/10.0 # use smaller noise signal
+           
 
 
     def work( self, e):
@@ -213,15 +215,16 @@ for i in range(0,33):
 logging.debug("Time to run: " + str(datetime.now() - tstart))
 
 speed = np.array(speed)
-logging.info("Mean: " + str(np.mean(speed)))
-logging.info("Standard deviation: " + str(np.std(speed)))
+logging.debug("Mean: " + str(np.mean(speed)))
+logging.debug("Standard deviation: " + str(np.std(speed)))
+logging.info(str(setpoint(0))+","+str(np.mean(speed))+","+str(np.std(speed)))
 
 mp.xlabel("Time (s)")
 mp.ylabel("Displayed value")
 mp.text(0.5,setpoint(0)+0.1,"Setpoint")         
 fig = mp.gcf() # get current figure
 fig.set_size_inches(11.69, 8.27)
-mp.show()
+#mp.show()
 fig.savefig("compare/compareResults"+str(setpoint(0))+".pdf",format="pdf",papertype='a4',dpi=100)
 mp.close()
 

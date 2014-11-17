@@ -1,3 +1,4 @@
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -66,63 +67,81 @@ pop1std = [3.149369794,
 9.523248626,
 7.679642482]
 
-pop2mean = [23.8333333333,
-18.875,
-18.6893939394,
-19.4393939394,
-24.1875,
-22.625,
-20.0,
-18.8787878788,
-17.046875,
-14.21875,
-19.0303030303,
-19.3560606061,
-13.6583333333,
-21.553030303,
-31.975,
-16.296875,
-20.7575757576,
-16.6818181818,
-22.7045454545,
-16.8671875]
+pop2mean = []
+pop2std = []
+text_file = open("compare.log","r")
+lines = text_file.readlines()
+for i in lines:
+    vals = i.split(',')
+    print vals
+    pop2mean.append(float(vals[1]))
+    pop2std.append(float(vals[2]))
 
-pop2std = [10.5323575497,
-8.625,
-5.46130683628,
-4.85471900344,
-7.2551167289,
-8.375,
-4.87767020889,
-4.63277242577,
-5.25685471403,
-6.97561321229,
-4.18771542899,
-4.75618827481,
-4.66301196176,
-5.50060519252,
-5.40537926514,
-6.18795373968,
-4.95069816338,
-7.36938608296,
-3.11913361214,
-6.14250825924]
+#pop2mean = [23.8333333333,
+#18.875,
+#18.6893939394,
+#19.4393939394,
+#24.1875,
+#22.625,
+#20.0,
+#18.8787878788,
+#17.046875,
+#14.21875,
+#19.0303030303,
+#19.3560606061,
+#13.6583333333,
+#21.553030303,
+#31.975,
+#16.296875,
+#20.7575757576,
+#16.6818181818,
+#22.7045454545,
+#16.8671875]
+
+#pop2std = [10.5323575497,
+#8.625,
+#5.46130683628,
+#4.85471900344,
+#7.2551167289,
+#8.375,
+#4.87767020889,
+#4.63277242577,
+#5.25685471403,
+#6.97561321229,
+#4.18771542899,
+#4.75618827481,
+#4.66301196176,
+#5.50060519252,
+#5.40537926514,
+#6.18795373968,
+#4.95069816338,
+#7.36938608296,
+#3.11913361214,
+#6.14250825924]
 
 N = 20
 
 ind = np.arange(N)  # the x locations for the groups
 width = 0.35       # the width of the bars
 
+font = {'size'   : 22}
+matplotlib.rc('font', **font)
+
 fig, ax = plt.subplots()
 rects1 = ax.bar(ind, pop1mean, width, color='#3498db', yerr=pop1std)
 rects2 = ax.bar(ind+width, pop2mean, width, color='#d35400', yerr=pop2std)
 
 # add some text for labels, title and axes ticks
-ax.set_ylabel('Mean time to finish')
+ax.set_ylabel('Mean time to finish (s)')
 ax.set_xlabel('Number used in trials')
-ax.set_title('Comparing simulation to lab study over 33 trials for 20 different numbers')
+#ax.set_title('Comparing simulation to lab study over 33 trials for 20 different numbers')
 ax.set_xticks(ind+width)
 ax.set_xticklabels(x)
+
+ax.xaxis.set_ticks_position('bottom')
+ax.yaxis.set_ticks_position('left')
+ax.spines["right"].set_visible(False)
+ax.spines["top"].set_visible(False)
 
 ax.legend( (rects1[0], rects2[0]), ('Lab study', 'Simulation') )
 
