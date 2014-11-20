@@ -27,6 +27,8 @@ NOISE_SIGMA = 10
 tstart = datetime.now() # Used to calculcate time to run simulation
 speed = [] # Used to calculcate average time to finish for iterations
 
+maxdisplay = []
+
 # Set up graphs
 with ppl.pretty:
     fig = mp.figure(figsize=(8,6))
@@ -81,6 +83,7 @@ class Controller(fb.Component):
         self.crossings = 0
         self.last_sign = 1
         self.ended = False
+        self.maxvalue = 0
 
         d = decimal.Decimal(str(xref))
         places = abs(d.as_tuple().exponent)
@@ -100,6 +103,7 @@ class Controller(fb.Component):
                     logging.debug("Reached target value")
                     speed.append((len(self.usignal)-1)/4.0)
                     logging.debug("Speed: " + str(speed[-1]))
+                    maxdisplay.append(self.maxvalue)
                     self.ended = True;
                 return 0;
 
@@ -121,6 +125,9 @@ class Controller(fb.Component):
                 or ((self.yplot[-2] < self.reference[-1]) and (self.yplot[-1] > self.reference[-1])) ):
                     self.crossings +=1
 
+            if self.yplot[-1] > self.maxvalue:
+                self.maxvalue = self.yplot[-1]
+
         
         ## Begin - hybrid automation
 
@@ -132,6 +139,8 @@ class Controller(fb.Component):
 
         if (abs(e) > self.switch):
             self.u = self.kp * ((self.k1 * math.copysign(1, e))-(self.k2 * math.copysign(1,self.d)))
+            if(len(self.xplot) >1):
+                logging.info("C"+str(self.xplot[-1]/4.0))
             
         else: # |e(t)| <= switch signal
             self.square = not self.square # square wave
@@ -139,9 +148,11 @@ class Controller(fb.Component):
             if(self.square):
                 if((self.crossings > 2) and (abs(e) < 1.0)): #if overshot three times or more and the error is small, only use small chevron
                     self.u = self.kp * (self.k1 - self.k2) * math.copysign(1,e)
+                    logging.info("F"+str(self.xplot[-1]/4.0))
                 else:                    
                     # This is the default behaviour
-                    self.u =  (self.kp * ((self.k1 * math.copysign(1,e))-(self.k2 * math.copysign(1,self.d))))       
+                    self.u =  (self.kp * ((self.k1 * math.copysign(1,e))-(self.k2 * math.copysign(1,self.d))))
+                    logging.info("D"+str(self.xplot[-1]/4.0))       
             else:
                 self.u = 0
         
@@ -149,7 +160,7 @@ class Controller(fb.Component):
         
         # Record output signal
         self.usignal.append(self.u)
-        
+
         # Introduce variable delay, but not for stepping behaviour
         if( (self.delay > 0) and (abs(self.prev) > self.switch)):
             varDelay = random.randint(1,self.delay)
@@ -198,7 +209,7 @@ def setpoint(t):
 fb.DT = 0.1
 tm = 160 
 
-for i in range(0,33):
+for i in range(0,1):
     
     c = Controller( 1, 5.5, 4.5, setpoint(0),hasNoise=True, delay=2)
 
@@ -208,13 +219,16 @@ for i in range(0,33):
     logging.debug("Crossings: " +str(c.crossings))
 
     newxplot = [x / 4.0 for x in c.xplot] # Each time step is 250ms
-    
+
+    #ppl.axvspan(1.25, 1.55, facecolor='g', alpha=0.5)    
+
     ppl.plot(ax,newxplot,c.reference,'b')
     ppl.plot(ax,newxplot, c.yplot)
 
 logging.debug("Time to run: " + str(datetime.now() - tstart))
 
 speed = np.array(speed)
+logging.info("Maximum displayed value: " + str(max(maxdisplay)))
 logging.debug("Mean: " + str(np.mean(speed)))
 logging.debug("Standard deviation: " + str(np.std(speed)))
 logging.info(str(setpoint(0))+","+str(np.mean(speed))+","+str(np.std(speed)))
@@ -224,7 +238,7 @@ mp.ylabel("Displayed value")
 mp.text(0.5,setpoint(0)+0.1,"Setpoint")         
 fig = mp.gcf() # get current figure
 fig.set_size_inches(11.69, 8.27)
-#mp.show()
+mp.show()
 fig.savefig("compare/compareResults"+str(setpoint(0))+".pdf",format="pdf",papertype='a4',dpi=100)
 mp.close()
 
