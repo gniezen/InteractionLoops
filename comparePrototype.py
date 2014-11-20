@@ -139,8 +139,6 @@ class Controller(fb.Component):
 
         if (abs(e) > self.switch):
             self.u = self.kp * ((self.k1 * math.copysign(1, e))-(self.k2 * math.copysign(1,self.d)))
-            if(len(self.xplot) >1):
-                logging.info("C"+str(self.xplot[-1]/4.0))
             
         else: # |e(t)| <= switch signal
             self.square = not self.square # square wave
@@ -148,11 +146,9 @@ class Controller(fb.Component):
             if(self.square):
                 if((self.crossings > 2) and (abs(e) < 1.0)): #if overshot three times or more and the error is small, only use small chevron
                     self.u = self.kp * (self.k1 - self.k2) * math.copysign(1,e)
-                    logging.info("F"+str(self.xplot[-1]/4.0))
                 else:                    
                     # This is the default behaviour
-                    self.u =  (self.kp * ((self.k1 * math.copysign(1,e))-(self.k2 * math.copysign(1,self.d))))
-                    logging.info("D"+str(self.xplot[-1]/4.0))       
+                    self.u =  (self.kp * ((self.k1 * math.copysign(1,e))-(self.k2 * math.copysign(1,self.d))))       
             else:
                 self.u = 0
         
@@ -209,7 +205,7 @@ def setpoint(t):
 fb.DT = 0.1
 tm = 160 
 
-for i in range(0,1):
+for i in range(0,33):
     
     c = Controller( 1, 5.5, 4.5, setpoint(0),hasNoise=True, delay=2)
 
@@ -219,9 +215,7 @@ for i in range(0,1):
     logging.debug("Crossings: " +str(c.crossings))
 
     newxplot = [x / 4.0 for x in c.xplot] # Each time step is 250ms
-
-    #ppl.axvspan(1.25, 1.55, facecolor='g', alpha=0.5)    
-
+    
     ppl.plot(ax,newxplot,c.reference,'b')
     ppl.plot(ax,newxplot, c.yplot)
 
@@ -238,7 +232,7 @@ mp.ylabel("Displayed value")
 mp.text(0.5,setpoint(0)+0.1,"Setpoint")         
 fig = mp.gcf() # get current figure
 fig.set_size_inches(11.69, 8.27)
-mp.show()
+#mp.show()
 fig.savefig("compare/compareResults"+str(setpoint(0))+".pdf",format="pdf",papertype='a4',dpi=100)
 mp.close()
 
