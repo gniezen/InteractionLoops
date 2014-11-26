@@ -11,4 +11,4 @@ Modelling dynamic human-device interaction using feedback control
 
 ## Running
 - Run pvsio-web: $./start.sh
-- In another terminal, run the simulation: python comparePrototype.py
+- In another terminal, run the simulation: python simulation.py

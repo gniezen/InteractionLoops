@@ -1,4 +1,13 @@
 
+# Framework from the book:
+# Feedback Control for Computer Systems by Philipp K. Janert (9781449361693)
+#
+# Minor modifications by Gerrit Niezen
+#
+# Original version available from:
+# https://github.com/oreillymedia/feedback_control_for_computer_systems
+
+
 import math
 import random
 import matplotlib.pyplot as mp
@@ -44,20 +53,20 @@ class AdvController( Component ):
 
         self.unclamped = True
         self.clamp_lo, self.clamp_hi = clamp
-        
+
         self.alpha = smooth
-    
+
     def work( self, e ):
         if self.unclamped:
             self.i += DT*e
-            
+
         self.d = self.alpha*(e - self.prev)/DT + (1.0-self.alpha)*self.d
 
         u = self.kp*e + self.ki*self.i + self.kd*self.d
 
         self.unclamped = ( self.clamp_lo < u < self.clamp_hi )
         self.prev = e
-                
+
         return u
 
 # --- Relay and Band Controllers
@@ -98,7 +107,7 @@ class HysteresisRelayController( Component ):
         self.prev = None
 
     def work( self, e ):
-        
+
         if e > self.prev: # raising
             if e < self.zone:
                 u = 0
@@ -119,7 +128,7 @@ class HysteresisRelayController( Component ):
 class Boiler( Component ):
     # Default g: temp drops to 1/e in 100 secs (for water: approx 1 deg/sec)
     # Work u: input is change in temp (per sec), if no heat loss
-    
+
     def __init__( self, g=0.01 ):
         self.y = 0      # initial state, "temperature" (above ambient)
         self.g = g      # constant of proportionality (time constant)
@@ -130,7 +139,7 @@ class Boiler( Component ):
 
 class Spring( Component ):
     # In mks units (defaults: 100g, 1N/m, approx 10 periods to fall to 1/e)
-    
+
     def __init__( self, m=0.1, k=1, g=0.05 ):
         self.x = 0      # position
         self.v = 0      # velocity
@@ -162,7 +171,7 @@ class Limiter( Component ):
 class Discretizer( Component ):
     def __init__( self, binwidth ):
         self.binwidth = binwidth
-    
+
     def work( self, u ):
         return self.binwidth*int( u/self.binwidth )
 
@@ -173,12 +182,12 @@ class Hysteresis( Component ):
 
     def work( self, u ):
         y = self.prev
-        
+
         if abs(u - self.prev) > self.threshold:
             y = u
             self.prev = u
 
-        return y    
+        return y
 
 class Integrator( Component ):
     def __init__( self ):
@@ -250,7 +259,7 @@ def relay( t, t0, tp ):
 def static_test( plant_ctor, ctor_args, umax, steps, repeats, tmax ):
     # Complete test for static process characteristic
     # From u=0 to umax taking steps steps, each one repeated repeats
-    
+
     for i in range( 0, steps ):
         u = float(i)*umax/float(steps)
 
@@ -261,7 +270,7 @@ def static_test( plant_ctor, ctor_args, umax, steps, repeats, tmax ):
                 y = p.work(u)
 
             print u, y
-            
+
     quit()
 
 def step_response( setpoint, plant, tm=5000 ):
@@ -271,7 +280,7 @@ def step_response( setpoint, plant, tm=5000 ):
         y = plant.work( u )
 
         print t, t*DT, r, 0, u, u, y, y, plant.monitoring()
-        
+
     quit()
 
 def open_loop( setpoint, controller, plant, tm=5000 ):
@@ -279,7 +288,7 @@ def open_loop( setpoint, controller, plant, tm=5000 ):
         r = setpoint(t)  # This is the controller input, not really the setpt!
         u = controller.work( r )
         y = plant.work( u )
-        
+
         print t, t*DT, r, 0, u, u, y, y, plant.monitoring()
 
     quit()

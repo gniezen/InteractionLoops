@@ -1,3 +1,25 @@
+# A control-theoretic model that can be used to model both the discrete 
+# and continuous behaviour of a human operator. The human operator model
+# can be used to predict how the user will respond to changes in the design
+# of a user interface.
+#
+# Copyright (C) 2014  Swansea University
+# Author: Gerrit Niezen
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
 import os, sys
 import random
 import math
@@ -13,7 +35,6 @@ import decimal
 
 
 ## Set up logging
-#%(asctime)s 
 logging.basicConfig(filename='compare.log',format='%(message)s', level=logging.INFO)
 console = logging.StreamHandler()
 console.setLevel(logging.INFO)
@@ -37,7 +58,7 @@ with ppl.pretty:
 if len(sys.argv) > 1:
     ref = float(sys.argv[1])
 else:
-    ref = 56.7 
+    ref = 56.7
 
 
 class Device (fb.Component):
@@ -45,16 +66,16 @@ class Device (fb.Component):
         self.xi = 0
         self.prev = None
         self.ws = None
-    
+
     def work( self, u):
-        
-        if(self.ws == None): 
-            self.ws,self.prev = ps.connect(u) # connect to pvsio-web server       
+
+        if(self.ws == None):
+            self.ws,self.prev = ps.connect(u) # connect to pvsio-web server
         else:
             self.prev = ps.getDisplay(self.ws,u,self.prev) # Get displayed value from pvsio-web
 
         self.xi = self.prev['left_display']
-        
+
         return self.xi
 
 
@@ -90,11 +111,11 @@ class Controller(fb.Component):
         if(places > 1):
             logging.debug("Setpoint has two decimal places")
             self.sigma = NOISE_SIGMA/10.0 # use smaller noise signal
-           
+
 
 
     def work( self, e):
-        
+
         # stop if target reached
         if(len(self.usignal)>0):
             if(e == 0 and self.usignal[-1] == 0):
@@ -108,10 +129,10 @@ class Controller(fb.Component):
                 return 0;
 
         logging.debug("Actual error: " + str(e))
-        e += self._noise()  # Introduce noise, if any 
-        
-        logging.debug("Perceived error: " + str(e))   
-        self.eplot.append(e)    
+        e += self._noise()  # Introduce noise, if any
+
+        logging.debug("Perceived error: " + str(e))
+        self.eplot.append(e)
 
         self.d = ( e - self.prev )/fb.DT # First derivative
         self.d2 = (e - 2*self.prev + self.prev2)/((fb.DT)**2) # Second derivative
@@ -128,32 +149,32 @@ class Controller(fb.Component):
             if self.yplot[-1] > self.maxvalue:
                 self.maxvalue = self.yplot[-1]
 
-        
+
         ## Begin - hybrid automation
 
         if self.reference[-1] > 100: # for large setpoints, use larger constant value for switch signal
             self.switch = 100
         else:
-            self.switch = (SWITCH_SENSITIVITY*self.reference[-1]) # for small setpoints, switch signal changes proportionately 
+            self.switch = (SWITCH_SENSITIVITY*self.reference[-1]) # for small setpoints, switch signal changes proportionately
         logging.debug("Switch signal: %.2f", self.switch)
 
         if (abs(e) > self.switch):
             self.u = self.kp * ((self.k1 * math.copysign(1, e))-(self.k2 * math.copysign(1,self.d)))
-            
+
         else: # |e(t)| <= switch signal
             self.square = not self.square # square wave
 
             if(self.square):
                 if((self.crossings > 2) and (abs(e) < 1.0)): #if overshot three times or more and the error is small, only use small chevron
                     self.u = self.kp * (self.k1 - self.k2) * math.copysign(1,e)
-                else:                    
+                else:
                     # This is the default behaviour
-                    self.u =  (self.kp * ((self.k1 * math.copysign(1,e))-(self.k2 * math.copysign(1,self.d))))       
+                    self.u =  (self.kp * ((self.k1 * math.copysign(1,e))-(self.k2 * math.copysign(1,self.d))))
             else:
                 self.u = 0
-        
+
         ## End - hybrid automation
-        
+
         # Record output signal
         self.usignal.append(self.u)
 
@@ -168,8 +189,8 @@ class Controller(fb.Component):
                     ##Delay
                     logging.debug("self.usignal[-%d] = %.2f ",varDelay, self.usignal[-varDelay])
                     self.u = self.usignal[-varDelay] #delay u(t) by x timesteps
-                    
-                    
+
+
         # If output signal has changed signs, first set to zero to simulate finger switching between buttons
         if ((self.u != 0) and (len(self.usignal) > 0)):
              self.sign = self.u / abs(self.u)
@@ -178,19 +199,19 @@ class Controller(fb.Component):
                  self.last_sign = self.sign
                  self.u = 0
                  self.usignal[-1]=self.u #replace previous recording of output signal
-        
-        
+
+
         #Record previous error to calculate derivatives
         self.prev2 = self.prev
         self.prev = e
-        
+
 
         logging.debug("self.u = %.2f", self.u)
         return self.u
 
 
     def _noise(self):
-        if self.hasNoise == False: 
+        if self.hasNoise == False:
             return 0
 
         self.noise.append(fb.DT*random.gauss( 0, self.sigma ))
@@ -203,10 +224,10 @@ def setpoint(t):
     return ref
 
 fb.DT = 0.1
-tm = 160 
+tm = 160
 
 for i in range(0,33):
-    
+
     c = Controller( 1, 5.5, 4.5, setpoint(0),hasNoise=True, delay=2)
 
     p = Device()
@@ -215,7 +236,7 @@ for i in range(0,33):
     logging.debug("Crossings: " +str(c.crossings))
 
     newxplot = [x / 4.0 for x in c.xplot] # Each time step is 250ms
-    
+
     ppl.plot(ax,newxplot,c.reference,'b')
     ppl.plot(ax,newxplot, c.yplot)
 
@@ -229,11 +250,9 @@ logging.info(str(setpoint(0))+","+str(np.mean(speed))+","+str(np.std(speed)))
 
 mp.xlabel("Time (s)")
 mp.ylabel("Displayed value")
-mp.text(0.5,setpoint(0)+0.1,"Setpoint")         
+mp.text(0.5,setpoint(0)+0.1,"Setpoint")
 fig = mp.gcf() # get current figure
 fig.set_size_inches(11.69, 8.27)
 #mp.show()
-fig.savefig("compare/compareResults"+str(setpoint(0))+".pdf",format="pdf",papertype='a4',dpi=100)
+fig.savefig("graphs/compareResults"+str(setpoint(0))+".pdf",format="pdf",papertype='a4',dpi=100)
 mp.close()
-
-
