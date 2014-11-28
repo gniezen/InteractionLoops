@@ -1,4 +1,4 @@
-# A control-theoretic model that can be used to model both the discrete 
+# A control-theoretic model that can be used to model both the discrete
 # and continuous behaviour of a human operator. The human operator model
 # can be used to predict how the user will respond to changes in the design
 # of a user interface.
@@ -243,7 +243,7 @@ for i in range(0,33):
 logging.debug("Time to run: " + str(datetime.now() - tstart))
 
 speed = np.array(speed)
-logging.info("Maximum displayed value: " + str(max(maxdisplay)))
+logging.debug("Maximum displayed value: " + str(max(maxdisplay)))
 logging.debug("Mean: " + str(np.mean(speed)))
 logging.debug("Standard deviation: " + str(np.std(speed)))
 logging.info(str(setpoint(0))+","+str(np.mean(speed))+","+str(np.std(speed)))
