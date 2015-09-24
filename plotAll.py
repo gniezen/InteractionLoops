@@ -21,6 +21,7 @@
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.patches as patches
 
 numbers = [1.01,
 1.03,
@@ -105,12 +106,12 @@ N = 20
 ind = np.arange(N)  # the x locations for the groups
 width = 0.35       # the width of the bars
 
-font = {'size'   : 22}
+font = {'size'   : 12}
 matplotlib.rc('font', **font)
 
 fig, ax = plt.subplots()
-rects1 = ax.bar(ind, pop1mean, width, color='#3498db', yerr=pop1std)
-rects2 = ax.bar(ind+width, pop2mean, width, color='#d35400', yerr=pop2std)
+rects1 = ax.bar(ind, pop1mean, width, color='w', edgecolor='black', yerr=pop1std, ecolor='gray')
+rects2 = ax.bar(ind+width, pop2mean, width, color='w', yerr=pop2std, ecolor='gray')
 
 # add some text for labels, title and axes ticks
 ax.set_ylabel('Mean time to finish (s)')
@@ -123,6 +124,31 @@ ax.yaxis.set_ticks_position('left')
 ax.spines["right"].set_visible(False)
 ax.spines["top"].set_visible(False)
 
-ax.legend( (rects1[0], rects2[0]), ('Lab study', 'Simulation') )
 
-plt.show()
+# attach some text labels
+for rect in rects1:
+    height = rect.get_height()
+    ax.text(rect.get_x()+rect.get_width()/2., 0.3*height, 'L',
+            ha='center', va='bottom')
+
+for rect in rects2:
+    height = rect.get_height()
+    ax.text(rect.get_x()+rect.get_width()/2., 0.3*height, 'S',
+            ha='center', va='bottom')
+
+
+
+#ax.legend( ('L', 'S'), ('Lab study', 'Simulation') )
+ax.text(14.5,32.7,r'L - Lab study')
+ax.text(14.5,31.6, r'S - Simulation')
+ax.add_patch(
+    patches.Rectangle(
+        (14, 31),   # (x,y)
+        3.5,          # width
+        3,          # height
+        fill=False
+    )
+)
+fig.set_size_inches(11.69, 8.27)
+fig.savefig("compareAll.eps",format="eps",papertype='a4',dpi=100)
+
